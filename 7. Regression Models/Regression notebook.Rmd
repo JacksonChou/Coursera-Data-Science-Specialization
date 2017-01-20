@@ -1,7 +1,9 @@
 ---
 title: "Regression Model Notebook"
-author: Jackson Chou
-output: html_notebook
+author: "Jackson Chou"
+output:
+  html_notebook: default
+  html_document: default
 ---
 
 This is a collection of notes/scripts from the Regression course.  Lots of exercises done here are just following examples from lecture videos and practice problems.
@@ -11,8 +13,118 @@ This is a collection of notes/scripts from the Regression course.  Lots of exerc
 
 Example is taking the diamond dataset from UsingR.  Data is diamond prices (Singapore dollars) and diamond weight in carats (standard measure of diamond mass, 0.2 $g$).
 
-Loading data
-```{r}
+Loading diamond dataset:
+```{r, eval= FALSE}
+install.packages('UsingR')
 library(UsingR)
 data(diamond)
 ```
+
+
+###Plot the dataset
+
+```{r, echo = FALSE, fig.height = 5, fig.width =5}
+library(ggplot2)
+install.packages('dplyr')
+library(dplyr)
+
+diamond %>%
+  ggplot(aes(x =carat, y =price)) +
+  geom_point(size = 6, color = 'black', alpha = .2) +
+  geom_point(size = 5, color = 'blue', alpha = .2) +
+  xlab("Mass (carats)") +
+  ylab("Price (SIN $)") + 
+  geom_smooth(method = 'lm', color = 'black')
+
+```
+
+The fitted line in the plot is the regression line.  This line minimizes the sum of squared vertical distances between the data points.
+
+###Fitting the linear regression model
+
+```{r, echo = TRUE}
+ 
+fit <- lm(price ~ carat, data = diamond)
+coef(fit)
+
+```
+This prints out the coefficients for $\beta_i$ and $Y$.  However, we can also use summary() to print out the entire diagonostics of the regression model.
+
+```{r, echo = TRUE}
+summary(fit)
+```
+
+### Getting a more interpretable intercept
+
+```{r, echo = TRUE}
+fit2 <- lm(price ~ I(carat - mean(carat)), data = diamond)
+coef(fit2)
+```
+
+###Predicting the price of a diamond
+
+```{r, echo = TRUE}
+newx <- c(.16, .27, .34)
+coef(fit)[1] + coef(fit)[2] * newx
+```
+
+
+You can also use the predict() function to get the same answer.  The function is more helpful when dealing with more variables in the models.
+```{r, echo = TRUE}
+predict(fit, newdata = data.frame(carat = newx))
+```
+
+
+
+##Residuals
+Residuals represent variation left unexplained by our model. We emphasize the difference between residuals and errors. The errors are unobservable true errors from the known coefficients, while residuals are the observable errors from the estimated coefficients. In a sense, the residuals are estimates of the errors.
+
+
+```{r}
+y <- diamond$price
+x <- diamond$carat
+n <- length(y)
+
+fit <- lm(y~x)
+e <- resid(fit)
+yhat <- predict(fit)
+max(abs(e - (y-yhat)))
+max(abs(e - ( y - coef(fit)[1] - coef(fit)[2] * x)))
+```
+
+###Heteroskedasticity
+While the plot below seems like a good fit, falling along the regression line.  We still need to take a look at the residual plots.
+
+```{r}
+x <- runif(100, 0, 6)
+y <- x + rnorm(100, mean = 0, sd = .001*x)
+
+ggplot(data.frame(x = x, y = y), aes(x =x, y = y))+
+    geom_smooth(method = 'lm', color = 'black') +
+    geom_point(size = 7, color = 'black', alpha = .4) +
+    geom_point(size = 5, color = 'red', alpha = .4)
+```
+
+
+###Residual plot
+Notice we see a trend of greater variability as we head along the x variable, this is called Heteroskedasticity.
+
+```{r, echo = FALSE}
+ggplot(data.frame(x = x, y = resid(lm(y ~ x))), aes(x =x, y = y))+
+    geom_hline(yintercept = 0, size = 2) +
+    geom_point(size = 7, color = 'black', alpha = .4) +
+    geom_point(size = 5, color = 'red', alpha = .4) +
+    xlab("X") + ylab("Residual")
+```
+
+
+
+
+
+
+
+
+
+
+
+
