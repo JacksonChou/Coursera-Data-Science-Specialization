@@ -1,0 +1,88 @@
+---
+title: "Statistical Inference Course Project 2"
+author: "Jackson Chou"
+date: "May 29, 2016"
+output: pdf_document
+---
+
+##Overview
+
+This project analyzes the ToothGrowth data in the R datasets package.  I will be providing a basic summary of the dataset,
+comparing tooth growth by supp and dose.
+
+##Data
+
+```{r}
+library(datasets)
+library(ggplot2)
+library(gridExtra)
+library(GGally)
+
+#Loading the data
+data(ToothGrowth)
+
+```
+
+##Summary of the ToothGrowth data
+Let's take a look at the structure of our ToothGrowth dataset.
+
+```{r}
+str(ToothGrowth)
+summary(ToothGrowth)
+```
+
+There are 60 observations with 3 variables: length (numeric), supplement (factor) and dosage levels (numeric).
+
+```{r}
+table(ToothGrowth$supp, ToothGrowth$dose)
+```
+
+In this dataset, there are two types of supplements, "VC" and "OJ".  Each supplement has three dosage levels: 0.5, 1.0, and 2.0.  Based on the table, there are ten observations for each combination of supplement and dosage level.
+
+```{r, echo = FALSE}
+
+p1 <- ggplot(data=ToothGrowth, aes(x=supp,y=len,fill=supp)) +
+  geom_boxplot() + 
+  theme(legend.position="none") + 
+  facet_grid(.~dose) 
+
+p2 <- ggplot(data=ToothGrowth, aes(x=supp,y=len,fill=supp)) +
+  geom_boxplot()
+
+
+
+grid.arrange( p1, p2, ncol = 1, nrow=2)
+
+
+```
+
+## Compare tooth growth by supp and dose
+We'll use a two sample t-test to compare the difference of tooth growth by supplement and dosage levels.
+
+Dosage level at 0.5:
+```{r}
+#Run t.test
+t.test(len~supp, ToothGrowth[ToothGrowth$dose == 0.5, ])
+
+```
+
+
+Dosage level at 1:
+
+```{r}
+#Run t.test
+t.test(len~supp, ToothGrowth[ToothGrowth$dose == 1, ])
+
+```
+
+Dosage level at 2:
+```{r}
+#Run t.test
+t.test(len~supp, ToothGrowth[ToothGrowth$dose == 2, ])
+
+```
+
+##Conclusions
+Based on the t-test analysis, it is statistically significant that OJ supplment results in longer tooth growth for dosage levels of 0.5 and 1.0 compared to VC supplements.  However, based on the p-value for dosage level 2, we cannot conclude that the OJ supplement results in better tooth growth compared to VC supplement.
+
+
