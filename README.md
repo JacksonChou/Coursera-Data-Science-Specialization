@@ -1,2 +1,2 @@
-# CourseraDataScienceSpecialization
-Collection of coursework files for Data Science Specialization on Coursera
+# Coursera DataScience Specialization
+This is a collection of coursework files for Data Science Specialization on Coursera.
