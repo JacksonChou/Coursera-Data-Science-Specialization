@@ -1,0 +1,140 @@
+---
+title: "Public Health and Economic Implications from Storms and Severe Weather Events"
+author: "Jackson Chou"
+date: "April 5, 2016"
+output: html_document
+---
+
+## Synopsis
+
+Storms and other severe weather events can cause both public health and economic problems for communities and municipalities. Many severe events can result in fatalities, injuries, and property damage, and preventing such outcomes to the extent possible is a key concern.
+
+This project involves exploring the U.S. National Oceanic and Atmospheric Administration's (NOAA) storm database. This database tracks characteristics of major storms and weather events in the United States, including when and where they occur, as well as estimates of any fatalities, injuries, and property damage.
+
+## Data Processing
+
+###Data
+The data for this assignment come in the form of a comma-separated-value file compressed via the bzip2 algorithm to reduce its size. You can download the file from the course web site:
+
+[Storm Data](https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2FStormData.csv.bz2) [47Mb]
+There is also some documentation of the database available. Here you will find how some of the variables are constructed/defined.
+
+* [National Weather Service Storm Data Documentation](https://d396qusza40orc.cloudfront.net/repdata%2Fpeer2_doc%2Fpd01016005curr.pdf)
+* National Climatic Data Center Storm Events [FAQ](https://d396qusza40orc.cloudfront.net/repdata%2Fpeer2_doc%2FNCDC%20Storm%20Events-FAQ%20Page.pdf)
+
+The events in the database start in the year 1950 and end in November 2011. In the earlier years of the database there are generally fewer events recorded, most likely due to a lack of good records. More recent years should be considered more complete.
+
+###Data Transformation
+
+First we download the data from the url and read the storm data.
+```{r, message = FALSE, cache = TRUE}
+
+library(dplyr)
+
+
+fileurl <- "https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2FStormData.csv.bz2"
+download.file(fileurl, destfile="./StormData.csv.bz2")
+
+stormdata <- read.csv("StormData.csv.bz2")
+str(stormdata)
+
+```
+
+Now we use the dplyr package to subset relevant storm data and change event type to uppercase for unique aggregation.
+
+```{r, message = FALSE}
+
+relevantstorm <- select(stormdata, BGN_DATE, STATE, EVTYPE, FATALITIES, INJURIES, PROPDMG, PROPDMGEXP, CROPDMG, CROPDMGEXP, REFNUM)
+
+relevantstorm <- mutate(relevantstorm, EVTYPE = toupper(EVTYPE))
+
+```
+
+
+##Results
+The following two graphs below ranks the top storm events by population health and economic health damage.
+
+### Across the United States, which types of events (as indicated in the EVTYPE variable) are most harmful with respect to population health?
+
+First we aggregate the sum of "FATALITIES" and "INJURIES" by storm type.  Then we'll plot a bar chart that ranks the events based on the total damage.
+
+```{r}
+
+pophealth <- relevantstorm %>% 
+              group_by(EVTYPE) %>%
+              summarise(totaldamage = sum(FATALITIES, INJURIES))
+
+pophealth <- arrange(pophealth, desc(totaldamage))
+
+tophealthimpact <- pophealth[1:10,]
+
+```
+
+Here is the top 10 storm events that are most harmful to the population based on fatailities and injuries.
+
+```{r}
+print(tophealthimpact)
+```
+
+Now we plot a bar chart from this table.
+
+```{r}
+barplot(tophealthimpact$totaldamage, 
+     main = "Top 10 Storm Events by Fatalities and Injuries",
+     ylab = "Total Fatalities and Injuries",
+     names.arg = tophealthimpact$EVTYPE,
+     las = 2)
+```
+
+We can see from the table and bar chart that Tornado is the most harmful storm type to population health.  
+
+### Across the United States, which types of events have the greatest economic consequences?
+
+First we sum up the total property and crop damage to evaluate economic health by storm type.  The columns "PROPDMGEXP" and "CROPDMGEXP" denotes the magnitude of damage with "K" for thousands, "M" for millions, and "B" for billions.
+
+We'll start with calculating the numeric value of property damage using the "PROPDMGEXP" notations.
+```{r}
+relevantstorm <- mutate(relevantstorm, PropertyDamage = ifelse(PROPDMGEXP =='K', PROPDMG*1000, ifelse(PROPDMGEXP =='M', PROPDMG*1000000, ifelse(PROPDMGEXP == 'B', PROPDMG*1000000000, ifelse(PROPDMGEXP == 'H', PROPDMG*100, PROPDMG)))))
+```
+
+Next we do the same for crop damage using the "CROPDMGEXP" notation.
+
+```{r}
+
+relevantstorm <- mutate(relevantstorm, CropDamage = ifelse(CROPDMGEXP =='K', CROPDMG*1000, ifelse(CROPDMGEXP =='M', CROPDMG*1000000, ifelse(CROPDMGEXP == 'B', CROPDMG*1000000000, ifelse(CROPDMGEXP == 'H', CROPDMG*100, CROPDMG)))))
+
+```
+
+Now that we have the numeric value of both property and crop damage, we can aggregate them together by storm type similar to what we did with evaluating population health earlier.
+
+```{r}
+
+econhealth <- relevantstorm %>% 
+              group_by(EVTYPE) %>%
+              summarise(totalecondamage = sum(PropertyDamage, CropDamage))
+
+econhealth<- arrange(econhealth, desc(totalecondamage))
+
+topeconhealthimpact <- econhealth[1:10,]
+```
+
+Let's take a look at the top 10 storms that causes the most economic damage based on property and crop.
+
+```{r}
+
+print(topeconhealthimpact)
+
+```
+
+Now we plot the bar chart from this table.
+
+```{r}
+barplot(topeconhealthimpact$totalecondamage, 
+     main = "Top 10 Storm Events by Property and Crop Damages",
+     ylab = "Total Property and Crop Damages",
+     names.arg = topeconhealthimpact$EVTYPE,
+     las = 2)
+```
+
+We can see from the table and bar chart that Flood causes the most economic damage.
+

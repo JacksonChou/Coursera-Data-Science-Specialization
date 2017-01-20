@@ -1,0 +1,7 @@
+name: Publish Document
+account: rpubs
+server: rpubs.com
+appId: https://api.rpubs.com/api/v1/document/175593/267e6467f92744cabe65aaaa73b190ed
+bundleId: https://api.rpubs.com/api/v1/document/175593/267e6467f92744cabe65aaaa73b190ed
+url: http://rpubs.com/ORStudent/175593
+when: 1461567847.69259
